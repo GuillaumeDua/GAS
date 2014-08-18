@@ -1,0 +1,81 @@
+#include "./ATaskSystem.hpp"
+
+# define RET_FORMAT	int
+# define PARAM_FORMAT	std::string
+# define TASK_FORMAT	int,std::string
+
+class fake_TaskProducer : public TaskProducer<TASK_FORMAT>
+{
+public:
+
+  typedef	ACallBack<TASK_FORMAT> ACallBack_type;
+
+  fake_TaskProducer(boost::shared_ptr<ATasksList<TASK_FORMAT> > const & tl)
+    : TaskProducer(tl),
+      _value(0)
+  {}
+
+  const size_t &	GetValue(void) const
+  {
+    return this->_value;
+  }
+
+  int			cb_2(const std::string & s)
+  {
+    std::cout << "cb 2 : " << s << std::endl;
+    this->_value += 100;
+    return 100;
+  }
+
+  int			cb_3(const std::string & s)
+  {
+    std::cout << "cb 3 : " << s << std::endl;
+    this->_value += 200;
+    return 200;
+  }
+
+  int			cb_4(const std::string & s)
+  {
+    std::cout << "cb 4 : " << s << std::endl;
+    this->_value += 300;
+    return 300;
+  }
+
+  int			f_default(const std::string & s)
+  {
+    std::cout << "f_default : " << s << std::endl;
+    this->_value += 400;
+    return 555;
+  }
+
+protected:
+
+private:
+  size_t			_value;
+};
+
+int	main(void)
+{
+  boost::shared_ptr<ATasksList<TASK_FORMAT> >	tl	= boost::make_shared<ATasksList<TASK_FORMAT> >();
+  boost::shared_ptr<fake_TaskProducer>		f	= boost::make_shared<fake_TaskProducer>(tl);
+
+  f->InitSelfPtr();
+
+  f->AddTask(static_cast<TaskProducer<TASK_FORMAT>::CB_as_mthd>(&fake_TaskProducer::cb_2), "toto");
+  f->AddTask(static_cast<TaskProducer<TASK_FORMAT>::CB_as_mthd>(&fake_TaskProducer::cb_3), "titi");
+  f->AddTask(static_cast<TaskProducer<TASK_FORMAT>::CB_as_mthd>(&fake_TaskProducer::cb_4), "tata");
+  f->AddTask(static_cast<TaskProducer<TASK_FORMAT>::CB_as_mthd>(&fake_TaskProducer::cb_2), "tutu");
+  f->AddTask(static_cast<TaskProducer<TASK_FORMAT>::CB_as_mthd>(&fake_TaskProducer::cb_3), "tyty");
+  f->AddTask(static_cast<TaskProducer<TASK_FORMAT>::CB_as_mthd>(&fake_TaskProducer::cb_4), "turlute");
+
+  ATaskSystem<TASK_FORMAT>			ats(tl, 3);
+
+  ats.Run();
+  
+  // 2 second given to exec
+  sleep(2);
+
+  ats.Stop();
+
+  return 0;
+}

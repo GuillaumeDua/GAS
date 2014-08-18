@@ -1,0 +1,124 @@
+#include <iostream>
+
+#include "./ACallBack.hpp"
+#include "./TaskOwner.hpp"
+#include "./TaskList.hpp"
+#include "./TaskProducer.hpp"
+#include "./TaskConsumer.hpp"
+
+#include "./ATaskSystem.hpp"
+
+# define RET_FORMAT	int
+# define PARAM_FORMAT	std::string
+# define TASK_FORMAT	int,std::string
+
+class fake_TaskOwner : public ITaskOwner<TASK_FORMAT>
+{
+public:
+
+  typedef	ACallBack<TASK_FORMAT> ACallBack_type;
+
+  fake_TaskOwner(void)
+    : _counter(0),
+      _value(0)
+  {}
+
+  ~fake_TaskOwner()
+  {}
+
+  typename ITaskOwner::ACallBack_type *	getCB(const std::string & = "")
+  {
+    this->_counter += 1;
+
+    if (this->_counter % 2 == 0)
+      return new ACallBack_type(static_cast<ACallBack_type::CB_as_mthd>(&fake_TaskOwner::cb_2),
+				"this is cb 2",
+				this->_this_shared_ptr);
+    if (this->_counter % 3 == 0)
+      return new ACallBack_type(static_cast<ACallBack_type::CB_as_mthd>(&fake_TaskOwner::cb_3),
+				"this is cb 3",
+				this->_this_shared_ptr);
+    if (this->_counter % 4 == 0)
+      return new ACallBack_type(static_cast<ACallBack_type::CB_as_mthd>(&fake_TaskOwner::cb_4),
+				"this is cb 4",
+				this->_this_shared_ptr);
+
+    return new ACallBack_type(static_cast<ACallBack_type::CB_as_mthd>(&fake_TaskOwner::f_default),
+			      "this is default cb",
+			      this->_this_shared_ptr);
+  };
+
+  const size_t &	GetValue(void) const
+  {
+    return this->_value;
+  }
+
+protected:
+  int	cb_2(const std::string & s)
+  {
+    std::cout << "cb 2 : " << s << std::endl;
+    this->_value += 100;
+    return 100;
+  }
+
+  int	cb_3(const std::string & s)
+  {
+    std::cout << "cb 3 : " << s << std::endl;
+    this->_value += 200;
+    return 200;
+  }
+
+  int	cb_4(const std::string & s)
+  {
+    std::cout << "cb 4 : " << s << std::endl;
+    this->_value += 300;
+    return 300;
+  }
+
+  int	f_default(const std::string & s)
+  {
+    std::cout << "f_default : " << s << std::endl;
+    this->_value += 400;
+    return 555;
+  }
+
+private:
+  size_t			_counter;
+  size_t			_value;
+};
+
+int	main(void)
+{
+  boost::shared_ptr<fake_TaskOwner>	f = boost::make_shared<fake_TaskOwner>();
+  ATasksList<TASK_FORMAT>		tl;
+
+  f->Init();
+
+  int i;
+  // fake_TaskOwner::ACallBack_type * cb;
+
+  for (i = 0; i < 10; ++i)
+    {
+       // cb = f.getCB();
+       // cb->Call();
+       // delete cb;
+      tl.Push(f->getCB());
+    }
+
+  std::cout << "All Tasks pushed !" << std::endl;
+
+  std::list<RET_FORMAT> res_list;
+  tl.DoAll(res_list);
+
+
+  std::list<RET_FORMAT>::iterator	it;
+
+  for (it = res_list.begin(); it != res_list.end(); it++)
+    {
+      std::cout << "Res : " << *it << std::endl;
+    }
+
+  std::cout << "Value : " << f->GetValue() << std::endl;
+
+  return 0;
+}

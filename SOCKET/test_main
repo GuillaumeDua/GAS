@@ -1,0 +1,10 @@
+#include "./ASocketAttr.h"
+
+int	main(void)
+{
+  ASOCK::Attr * s;
+
+  s = NULL;
+  s = s;
+  return 0;
+}
