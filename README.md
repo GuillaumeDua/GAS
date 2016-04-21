@@ -10,9 +10,7 @@ Guss's Abstract Server
 just for the fun =)
 I also didnt know what a webservice is when i created it !
 
-Simple test of game engine
 -> Use basic C++
--> Use SFML for sprites rendering
 -> Use boost for multi-threading and shared ptrs
 
 About the author :
